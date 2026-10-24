@@ -51,7 +51,7 @@ const bars = [0,1,2,3,4];
 let quality = 0;
 
 function updateUI(speed, latency) {
-  const speedScore = Math.max(0, Math.min(100, speed / 10));
+  const speedScore = Math.min(100, speed * 6);
   const latencyScore = Math.max(0, 100 - (latency / 5));
   quality = (speedScore * 0.6 + latencyScore * 0.4);
   
@@ -80,12 +80,11 @@ async function measureSpeed() {
   for (const size of sizes) {
     const start = Date.now();
     try {
-      const resp = await fetch('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png?rand=' + Math.random(), {
+      await fetch('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png?rand=' + Math.random(), {
         cache: 'no-store',
         mode: 'no-cors'
       });
-      const time = Date.now() - start;
-      totalTime += time;
+      totalTime += Date.now() - start;
       totalBytes += size;
     } catch (e) {
       return 0;
