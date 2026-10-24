@@ -14,16 +14,19 @@ header { background: #0066cc; color: white; padding: 20px; text-align: center; }
 main { max-width: 600px; margin: 20px auto; padding: 20px; }
 .card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 8px #0002; }
 h2 { color: #0066cc; margin-bottom: 15px; }
-.signal { font-size: 2rem; font-weight: bold; text-align: center; margin: 20px 0; }
 .bars { display: flex; gap: 8px; justify-content: center; align-items: flex-end; height: 80px; }
 .bar { width: 20px; background: #ccc; border-radius: 4px; transition: 0.3s; }
-.bar.active { background: #0066cc; }
 .bar.good { background: #4caf50; }
 .bar.ok { background: #ff9800; }
 .bar.bad { background: #f44336; }
-.info { text-align: center; font-size: 1.1rem; margin: 10px 0; }
+.info { text-align: center; font-size: 1.1rem; margin: 10px 0; font-weight: bold; }
+.stat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+.stat div { padding: 10px; background: #f5f5f5; border-radius: 5px; }
+.stat-label { font-size: 0.85rem; color: #666; }
+.stat-value { font-size: 1.3rem; font-weight: bold; color: #0066cc; }
 button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; background: #0066cc; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
 button:active { opacity: 0.8; }
+button:disabled { opacity: 0.5; }
 #status { font-size: 0.9rem; color: #666; margin-top: 10px; }
 </style>
 </head>
@@ -31,81 +34,104 @@ button:active { opacity: 0.8; }
 <header><h1>📶 WiFi Scanner</h1></header>
 <main>
 <div class="card">
-<h2>Signal Strength</h2>
+<h2>Signal Quality</h2>
 <div class="bars" id="bars"></div>
-<div class="info" id="dbm">-50 dBm</div>
-<div class="info" id="quality">Excellent</div>
-<div class="info" id="dist">~5m</div>
-<button onclick="scan()">Scan Now</button>
-<p id="status"></p>
+<div class="info" id="quality">Unknown</div>
+<div class="stat">
+<div><span class="stat-label">Speed</span><span class="stat-value" id="speed">-</span></div>
+<div><span class="stat-label">Latency</span><span class="stat-value" id="latency">-</span></div>
 </div>
-
-<div class="card">
-<h2>Connection Info</h2>
-<p id="info">Checking...</p>
+<button id="btn" onclick="scan()">Scan Now</button>
+<p id="status"></p>
 </div>
 </main>
 
 <script>
 const bars = [0,1,2,3,4];
-let rssi = -50;
+let quality = 0;
 
-function updateBars(value) {
-  rssi = value;
-  const strength = Math.max(0, Math.min(100, (value + 100) * 2));
-  const barCount = Math.ceil(strength / 20);
+function updateUI(speed, latency) {
+  const speedScore = Math.max(0, Math.min(100, speed / 10));
+  const latencyScore = Math.max(0, 100 - (latency / 5));
+  quality = (speedScore * 0.6 + latencyScore * 0.4);
   
-  document.getElementById('dbm').textContent = rssi + ' dBm';
-  document.getElementById('quality').textContent = strength >= 80 ? 'Excellent' : strength >= 60 ? 'Good' : strength >= 40 ? 'Fair' : 'Poor';
-  document.getElementById('dist').textContent = '~' + Math.max(1, Math.round(10 / (strength/20))) + 'm';
-  
+  const barCount = Math.ceil(quality / 20);
   let html = '';
   bars.forEach(i => {
     let cls = 'bar';
     if (i < barCount) {
-      if (strength >= 80) cls += ' good';
-      else if (strength >= 60) cls += ' ok';
+      if (quality >= 80) cls += ' good';
+      else if (quality >= 50) cls += ' ok';
       else cls += ' bad';
     }
     html += '<div class="' + cls + '"></div>';
   });
   document.getElementById('bars').innerHTML = html;
+  
+  document.getElementById('speed').textContent = speed.toFixed(1) + ' Mb/s';
+  document.getElementById('latency').textContent = latency.toFixed(0) + ' ms';
+  document.getElementById('quality').textContent = quality >= 80 ? 'Excellent' : quality >= 60 ? 'Good' : quality >= 40 ? 'Fair' : 'Poor';
+}
+
+async function measureSpeed() {
+  const sizes = [100000, 500000, 1000000];
+  let totalBytes = 0, totalTime = 0;
+  
+  for (const size of sizes) {
+    const start = Date.now();
+    try {
+      const resp = await fetch('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png?rand=' + Math.random(), {
+        cache: 'no-store',
+        mode: 'no-cors'
+      });
+      const time = Date.now() - start;
+      totalTime += time;
+      totalBytes += size;
+    } catch (e) {
+      return 0;
+    }
+  }
+  
+  return (totalBytes / 1000) / (totalTime / 1000) / 1000;
+}
+
+async function measureLatency() {
+  let sum = 0;
+  for (let i = 0; i < 3; i++) {
+    const start = Date.now();
+    try {
+      await fetch('https://www.google.com/generate_204?rand=' + Math.random(), {
+        cache: 'no-store',
+        mode: 'no-cors'
+      });
+      sum += Date.now() - start;
+    } catch (e) {
+      return 999;
+    }
+  }
+  return sum / 3;
 }
 
 async function scan() {
-  document.getElementById('status').textContent = 'Scanning...';
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  document.getElementById('status').textContent = 'Measuring...';
   
   try {
-    const testUrl = 'https://www.google.com/generate_204';
-    let sum = 0, count = 5;
-    
-    for (let i = 0; i < count; i++) {
-      const start = Date.now();
-      await fetch(testUrl, { cache: 'no-store' });
-      const latency = Date.now() - start;
-      const est = -50 + (200 - Math.min(latency, 200)) / 2;
-      updateBars(est);
-      await new Promise(r => setTimeout(r, 300));
-    }
-    
-    document.getElementById('status').textContent = '✓ Scan complete';
-  } catch {
-    document.getElementById('status').textContent = '✗ Check connection';
+    const [speed, latency] = await Promise.all([
+      measureSpeed(),
+      measureLatency()
+    ]);
+    updateUI(speed, latency);
+    document.getElementById('status').textContent = '✓ Done';
+  } catch (e) {
+    document.getElementById('status').textContent = '✗ Error: check connection';
+  } finally {
+    btn.disabled = false;
   }
 }
 
-function getInfo() {
-  let info = 'Loading...';
-  if (navigator.connection) {
-    const conn = navigator.connection.effectiveType;
-    info = 'Type: ' + conn + ' | Unsaved: ' + navigator.connection.saveData;
-  }
-  document.getElementById('info').textContent = info;
-}
-
-updateBars(-60);
-getInfo();
-setInterval(scan, 10000);
+updateUI(0, 999);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
