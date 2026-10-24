@@ -1,198 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0066cc">
+<meta name="theme-color" content="#2d5a2d">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-512.png">
-<title>WiFi Scanner</title>
+<title>Mon Jardin Tropical</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font: 16px sans-serif; background: #f0f4f8; color: #222; }
-header { background: #0066cc; color: white; padding: 20px; text-align: center; }
+body { font: 16px sans-serif; background: #f0f8f0; color: #222; }
+header { background: #2d5a2d; color: white; padding: 20px; text-align: center; }
 main { max-width: 600px; margin: 20px auto; padding: 20px; }
 .card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 8px #0002; }
-h2 { color: #0066cc; margin-bottom: 15px; }
-.bars { display: flex; gap: 8px; justify-content: center; align-items: flex-end; height: 80px; }
-.bar { width: 20px; background: #ccc; border-radius: 4px; transition: 0.3s; }
-.bar.good { background: #4caf50; }
-.bar.ok { background: #ff9800; }
-.bar.bad { background: #f44336; }
-.info { text-align: center; font-size: 1.1rem; margin: 10px 0; font-weight: bold; }
-.stat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-.stat div { padding: 10px; background: #f5f5f5; border-radius: 5px; }
-.stat-label { font-size: 0.85rem; color: #666; }
-.stat-value { font-size: 1.3rem; font-weight: bold; color: #0066cc; }
-select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; background: #0066cc; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
-button:active { opacity: 0.8; }
-button.s { background: #666; }
-.map { display: grid; gap: 10px; }
-.room { padding: 15px; border-radius: 8px; color: white; font-weight: bold; text-align: center; }
-.room.good { background: #4caf50; }
-.room.ok { background: #ff9800; }
-.room.bad { background: #f44336; }
-.room.none { background: #ccc; }
-#status { font-size: 0.9rem; color: #666; margin-top: 10px; }
+h2 { color: #2d5a2d; margin-bottom: 15px; }
+.moon { text-align: center; font-size: 3rem; margin: 20px 0; }
+.phase-name { text-align: center; font-size: 1.2rem; font-weight: bold; color: #2d5a2d; margin: 10px 0; }
+.advice { background: #f0f8f0; padding: 15px; border-left: 4px solid #2d5a2d; border-radius: 5px; margin: 10px 0; }
+.plants { display: grid; gap: 10px; }
+.plant { padding: 10px; background: #e8f5e9; border-radius: 5px; border-left: 4px solid #4caf50; }
+.plant-name { font-weight: bold; color: #2d5a2d; }
+.plant-phase { font-size: 0.85rem; color: #666; }
+.tasks { margin-top: 15px; }
+label { display: block; padding: 8px 0; }
+input[type=checkbox] { margin-right: 8px; }
+button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; background: #2d5a2d; color: white; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
-<header><h1>📶 WiFi Scanner</h1></header>
+<header><h1>🌴 Mon Jardin Tropical</h1><p>La Réunion</p></header>
 <main>
 <div class="card">
-<h2>Live Signal</h2>
-<div class="bars" id="bars"></div>
-<div class="info" id="quality">Unknown</div>
-<div class="stat">
-<div><span class="stat-label">Speed</span><span class="stat-value" id="speed">-</span></div>
-<div><span class="stat-label">Latency</span><span class="stat-value" id="latency">-</span></div>
-</div>
-<label>Room :<select id="room">
-<option value="Living">Living Room</option>
-<option value="Bedroom">Bedroom</option>
-<option value="Kitchen">Kitchen</option>
-<option value="Bathroom">Bathroom</option>
-<option value="Garden">Garden</option>
-<option value="Garage">Garage</option>
-</select></label>
-<button onclick="toggleScan()" id="btn">Start Continuous Scan</button>
-<button class="s" onclick="clearMap()">Reset Map</button>
-<p id="status"></p>
+<h2>🌙 Calendrier Lunaire</h2>
+<div class="moon" id="moon">🌙</div>
+<div class="phase-name" id="phase">Nouvelle Lune</div>
+<div class="advice" id="advice"></div>
 </div>
 
 <div class="card">
-<h2>📍 House Map</h2>
-<div class="map" id="map"></div>
+<h2>🌺 Plantes Recommandées</h2>
+<div class="plants" id="plants"></div>
+</div>
+
+<div class="card">
+<h2>✓ Tâches du Jour</h2>
+<div class="tasks" id="tasks"></div>
+<button onclick="addTask()">+ Ajouter une tâche</button>
+<button onclick="clearTasks()" style="background: #666;">Effacer</button>
 </div>
 </main>
 
 <script>
-const bars = [0,1,2,3,4];
-const rooms = ['Living', 'Bedroom', 'Kitchen', 'Bathroom', 'Garden', 'Garage'];
-let quality = 0;
-let scanning = false;
-let data = JSON.parse(localStorage.getItem('wifi-map') || '{}');
-rooms.forEach(r => { if (!data[r]) data[r] = null; });
+const lunaires = [
+  { nom: 'Nouvelle Lune', emoji: '🌑', conseil: 'Semis, plantations, nettoyage', plantes: ['Salade', 'Herbes aromatiques', 'Radis'] },
+  { nom: 'Lune Croissante', emoji: '🌒', conseil: 'Récoltes, taille, multiplication', plantes: ['Vanille', 'Tomates', 'Piments'] },
+  { nom: 'Pleine Lune', emoji: '🌕', conseil: 'Observation, traitement naturel', plantes: ['Fleurs', 'Orchidées', 'Bougainvillées'] },
+  { nom: 'Lune Décroissante', emoji: '🌘', conseil: 'Désherbage, élagage, repos', plantes: ['Fruits', 'Bananes', 'Coco'] }
+];
 
-function updateUI(speed, latency) {
-  const speedScore = Math.min(100, speed * 6);
-  const latencyScore = Math.max(0, 100 - (latency / 5));
-  quality = (speedScore * 0.6 + latencyScore * 0.4);
+const plantes_reunion = [
+  { nom: 'Vanille', phase: 'Croissante', desc: 'Fleur précieuse' },
+  { nom: 'Fleur de Passage', phase: 'Pleine', desc: 'Très locale' },
+  { nom: 'Bougainvillée', phase: 'Pleine', desc: 'Colorée' },
+  { nom: 'Canna', phase: 'Croissante', desc: 'Tropicale' },
+  { nom: 'Tomate Cerise', phase: 'Croissante', desc: 'Productive' },
+  { nom: 'Piment', phase: 'Croissante', desc: 'Réunionnais' },
+  { nom: 'Bananier', phase: 'Décroissante', desc: 'Fruits' },
+  { nom: 'Goyavier', phase: 'Décroissante', desc: 'Fruits' }
+];
+
+let tasks = JSON.parse(localStorage.getItem('jardin-tasks') || '[]');
+
+function getPhase() {
+  const d = new Date();
+  const age = (d - new Date(2026, 0, 1)) / 86400000 % 29.5;
+  return Math.floor(age / 7.375);
+}
+
+function drawUI() {
+  const phase = getPhase();
+  const lune = lunaires[phase];
   
-  const barCount = Math.ceil(quality / 20);
+  document.getElementById('moon').textContent = lune.emoji;
+  document.getElementById('phase').textContent = lune.nom;
+  document.getElementById('advice').innerHTML = '<b>À faire :</b> ' + lune.conseil;
+  
   let html = '';
-  bars.forEach(i => {
-    let cls = 'bar';
-    if (i < barCount) {
-      if (quality >= 80) cls += ' good';
-      else if (quality >= 60) cls += ' ok';
-      else cls += ' bad';
+  plantes_reunion.forEach(p => {
+    if (p.phase === lune.nom) {
+      html += '<div class="plant"><div class="plant-name">' + p.nom + '</div><div class="plant-phase">' + p.desc + '</div></div>';
     }
-    html += '<div class="' + cls + '"></div>';
   });
-  document.getElementById('bars').innerHTML = html;
+  if (!html) html = '<p>Consultez les autres phases</p>';
+  document.getElementById('plants').innerHTML = html;
   
-  document.getElementById('speed').textContent = speed.toFixed(1) + ' Mb/s';
-  document.getElementById('latency').textContent = latency.toFixed(0) + ' ms';
-  document.getElementById('quality').textContent = quality >= 80 ? 'Excellent' : quality >= 60 ? 'Good' : quality >= 40 ? 'Fair' : 'Poor';
-  
-  if (scanning) {
-    const room = document.getElementById('room').value;
-    data[room] = Math.round(quality);
-    localStorage.setItem('wifi-map', JSON.stringify(data));
-    drawMap();
-  }
-}
-
-function drawMap() {
-  let html = '';
-  rooms.forEach(r => {
-    const val = data[r];
-    let cls = 'room none';
-    if (val !== null) {
-      if (val >= 80) cls = 'room good';
-      else if (val >= 60) cls = 'room ok';
-      else cls = 'room bad';
-    }
-    html += '<div class="' + cls + '">' + r + (val !== null ? '<br>' + val + '%' : '') + '</div>';
+  let taskHtml = '';
+  tasks.forEach((t, i) => {
+    taskHtml += '<label><input type="checkbox" ' + (t.done ? 'checked' : '') + ' onchange="toggleTask(' + i + ')">' + t.text + '</label>';
   });
-  document.getElementById('map').innerHTML = html;
+  document.getElementById('tasks').innerHTML = taskHtml || '<p>Aucune tâche</p>';
 }
 
-async function measureSpeed() {
-  const sizes = [100000, 500000, 1000000];
-  let totalBytes = 0, totalTime = 0;
-  
-  for (const size of sizes) {
-    const start = Date.now();
-    try {
-      await fetch('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png?rand=' + Math.random(), {
-        cache: 'no-store',
-        mode: 'no-cors'
-      });
-      totalTime += Date.now() - start;
-      totalBytes += size;
-    } catch (e) {
-      return 0;
-    }
-  }
-  
-  return (totalBytes * 8) / (totalTime * 1000);
-}
-
-async function measureLatency() {
-  let sum = 0;
-  for (let i = 0; i < 3; i++) {
-    const start = Date.now();
-    try {
-      await fetch('https://www.google.com/generate_204?rand=' + Math.random(), {
-        cache: 'no-store',
-        mode: 'no-cors'
-      });
-      sum += Date.now() - start;
-    } catch (e) {
-      return 999;
-    }
-  }
-  return sum / 3;
-}
-
-async function scan() {
-  try {
-    const [speed, latency] = await Promise.all([
-      measureSpeed(),
-      measureLatency()
-    ]);
-    updateUI(speed, latency);
-  } catch (e) {
-    document.getElementById('status').textContent = '✗ Error';
+function addTask() {
+  const t = prompt('Nouvelle tâche :');
+  if (t) {
+    tasks.push({ text: t, done: false });
+    localStorage.setItem('jardin-tasks', JSON.stringify(tasks));
+    drawUI();
   }
 }
 
-function toggleScan() {
-  scanning = !scanning;
-  document.getElementById('btn').textContent = scanning ? 'Stop Scan' : 'Start Continuous Scan';
-  document.getElementById('btn').style.background = scanning ? '#f44336' : '#0066cc';
-  document.getElementById('status').textContent = scanning ? 'Scanning every 5s...' : '';
-  
-  if (scanning) {
-    scan();
-    const interval = setInterval(() => {
-      if (!scanning) clearInterval(interval);
-      else scan();
-    }, 5000);
-  }
+function toggleTask(i) {
+  tasks[i].done = !tasks[i].done;
+  localStorage.setItem('jardin-tasks', JSON.stringify(tasks));
+  drawUI();
 }
 
-function clearMap() {
-  data = {};
-  rooms.forEach(r => { data[r] = null; });
-  localStorage.setItem('wifi-map', JSON.stringify(data));
-  drawMap();
+function clearTasks() {
+  tasks = [];
+  localStorage.setItem('jardin-tasks', JSON.stringify(tasks));
+  drawUI();
 }
 
-drawMap();
+drawUI();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
