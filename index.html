@@ -24,9 +24,16 @@ h2 { color: #0066cc; margin-bottom: 15px; }
 .stat div { padding: 10px; background: #f5f5f5; border-radius: 5px; }
 .stat-label { font-size: 0.85rem; color: #666; }
 .stat-value { font-size: 1.3rem; font-weight: bold; color: #0066cc; }
+select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
 button { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; background: #0066cc; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
 button:active { opacity: 0.8; }
-button:disabled { opacity: 0.5; }
+button.s { background: #666; }
+.map { display: grid; gap: 10px; }
+.room { padding: 15px; border-radius: 8px; color: white; font-weight: bold; text-align: center; }
+.room.good { background: #4caf50; }
+.room.ok { background: #ff9800; }
+.room.bad { background: #f44336; }
+.room.none { background: #ccc; }
 #status { font-size: 0.9rem; color: #666; margin-top: 10px; }
 </style>
 </head>
@@ -34,21 +41,39 @@ button:disabled { opacity: 0.5; }
 <header><h1>📶 WiFi Scanner</h1></header>
 <main>
 <div class="card">
-<h2>Signal Quality</h2>
+<h2>Live Signal</h2>
 <div class="bars" id="bars"></div>
 <div class="info" id="quality">Unknown</div>
 <div class="stat">
 <div><span class="stat-label">Speed</span><span class="stat-value" id="speed">-</span></div>
 <div><span class="stat-label">Latency</span><span class="stat-value" id="latency">-</span></div>
 </div>
-<button id="btn" onclick="scan()">Scan Now</button>
+<label>Room :<select id="room">
+<option value="Living">Living Room</option>
+<option value="Bedroom">Bedroom</option>
+<option value="Kitchen">Kitchen</option>
+<option value="Bathroom">Bathroom</option>
+<option value="Garden">Garden</option>
+<option value="Garage">Garage</option>
+</select></label>
+<button onclick="toggleScan()" id="btn">Start Continuous Scan</button>
+<button class="s" onclick="clearMap()">Reset Map</button>
 <p id="status"></p>
+</div>
+
+<div class="card">
+<h2>📍 House Map</h2>
+<div class="map" id="map"></div>
 </div>
 </main>
 
 <script>
 const bars = [0,1,2,3,4];
+const rooms = ['Living', 'Bedroom', 'Kitchen', 'Bathroom', 'Garden', 'Garage'];
 let quality = 0;
+let scanning = false;
+let data = JSON.parse(localStorage.getItem('wifi-map') || '{}');
+rooms.forEach(r => { if (!data[r]) data[r] = null; });
 
 function updateUI(speed, latency) {
   const speedScore = Math.min(100, speed * 6);
@@ -61,7 +86,7 @@ function updateUI(speed, latency) {
     let cls = 'bar';
     if (i < barCount) {
       if (quality >= 80) cls += ' good';
-      else if (quality >= 50) cls += ' ok';
+      else if (quality >= 60) cls += ' ok';
       else cls += ' bad';
     }
     html += '<div class="' + cls + '"></div>';
@@ -71,6 +96,28 @@ function updateUI(speed, latency) {
   document.getElementById('speed').textContent = speed.toFixed(1) + ' Mb/s';
   document.getElementById('latency').textContent = latency.toFixed(0) + ' ms';
   document.getElementById('quality').textContent = quality >= 80 ? 'Excellent' : quality >= 60 ? 'Good' : quality >= 40 ? 'Fair' : 'Poor';
+  
+  if (scanning) {
+    const room = document.getElementById('room').value;
+    data[room] = Math.round(quality);
+    localStorage.setItem('wifi-map', JSON.stringify(data));
+    drawMap();
+  }
+}
+
+function drawMap() {
+  let html = '';
+  rooms.forEach(r => {
+    const val = data[r];
+    let cls = 'room none';
+    if (val !== null) {
+      if (val >= 80) cls = 'room good';
+      else if (val >= 60) cls = 'room ok';
+      else cls = 'room bad';
+    }
+    html += '<div class="' + cls + '">' + r + (val !== null ? '<br>' + val + '%' : '') + '</div>';
+  });
+  document.getElementById('map').innerHTML = html;
 }
 
 async function measureSpeed() {
@@ -112,25 +159,40 @@ async function measureLatency() {
 }
 
 async function scan() {
-  const btn = document.getElementById('btn');
-  btn.disabled = true;
-  document.getElementById('status').textContent = 'Measuring...';
-  
   try {
     const [speed, latency] = await Promise.all([
       measureSpeed(),
       measureLatency()
     ]);
     updateUI(speed, latency);
-    document.getElementById('status').textContent = '✓ Done';
   } catch (e) {
-    document.getElementById('status').textContent = '✗ Error: check connection';
-  } finally {
-    btn.disabled = false;
+    document.getElementById('status').textContent = '✗ Error';
   }
 }
 
-updateUI(0, 999);
+function toggleScan() {
+  scanning = !scanning;
+  document.getElementById('btn').textContent = scanning ? 'Stop Scan' : 'Start Continuous Scan';
+  document.getElementById('btn').style.background = scanning ? '#f44336' : '#0066cc';
+  document.getElementById('status').textContent = scanning ? 'Scanning every 5s...' : '';
+  
+  if (scanning) {
+    scan();
+    const interval = setInterval(() => {
+      if (!scanning) clearInterval(interval);
+      else scan();
+    }, 5000);
+  }
+}
+
+function clearMap() {
+  data = {};
+  rooms.forEach(r => { data[r] = null; });
+  localStorage.setItem('wifi-map', JSON.stringify(data));
+  drawMap();
+}
+
+drawMap();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
