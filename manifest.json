@@ -1,3 +1,4 @@
+cat > manifest.json << 'EOF'
 {
   "name": "Analyseur WiFi",
   "short_name": "WiFi",
@@ -9,9 +10,15 @@
   "theme_color": "#0066cc",
   "icons": [
     {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
       "src": "icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }
   ]
 }
+EOF
