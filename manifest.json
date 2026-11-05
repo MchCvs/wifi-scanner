@@ -2,29 +2,14 @@ cat > ~/Documents/Wifi-scanner/manifest.json << 'ENDOFFILE'
 {
   "name": "Analyseur WiFi",
   "short_name": "WiFi",
-  "description": "Mesurez la force du signal WiFi dans votre maison",
   "start_url": "/wifi-scanner/",
-  "scope": "/wifi-scanner/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "lang": "fr",
   "background_color": "#f0f4f8",
   "theme_color": "#0066cc",
-  "icons": [
-    {
-      "src": "/wifi-scanner/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/wifi-scanner/icon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false
+  "icons": [{
+    "src": "/wifi-scanner/icon-512.png",
+    "sizes": "512x512",
+    "type": "image/png"
+  }]
 }
 ENDOFFILE
