@@ -1,0 +1,17 @@
+{
+  "name": "Analyseur WiFi",
+  "short_name": "WiFi",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "lang": "fr",
+  "background_color": "#f0f4f8",
+  "theme_color": "#0066cc",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
