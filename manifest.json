@@ -2,9 +2,11 @@ cat > manifest.json << 'EOF'
 {
   "name": "Analyseur WiFi",
   "short_name": "WiFi",
+  "description": "Mesurez la force du signal WiFi dans votre maison",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "lang": "fr",
   "background_color": "#f0f4f8",
   "theme_color": "#0066cc",
@@ -12,13 +14,17 @@ cat > manifest.json << 'EOF'
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon.svg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
-  ]
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
 EOF

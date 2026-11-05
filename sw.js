@@ -1,5 +1,6 @@
-const CACHE_NAME = 'wifi-scanner-v2';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/icon.svg'];
+cat > sw.js << 'EOF'
+const CACHE_NAME = 'wifi-scanner-v4';
+const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-512.png', '/icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -14,9 +15,7 @@ self.addEventListener('activate', e => {
     caches.keys().then(names => {
       return Promise.all(
         names.map(name => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
+          if (name !== CACHE_NAME) return caches.delete(name);
         })
       );
     })
@@ -29,3 +28,4 @@ self.addEventListener('fetch', e => {
       .then(response => response || fetch(e.request))
   );
 });
+EOF
