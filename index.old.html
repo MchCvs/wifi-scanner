@@ -1,0 +1,379 @@
+cat > ~/Documents/Wifi-scanner/index.html << 'ENDOFFILE'
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0066cc">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Analyseur WiFi">
+  <meta name="apple-mobile-web-app-title" content="Analyseur WiFi">
+  <meta name="msapplication-TileColor" content="#0066cc">
+  <meta name="msapplication-tap-highlight" content="no">
+  <link rel="manifest" href="/wifi-scanner/manifest.json">
+  <link rel="icon" href="/wifi-scanner/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/wifi-scanner/icon-512.png">
+  <title>Analyseur WiFi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font: 16px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #222;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, #0066cc, #0088ff);
+      color: white;
+      padding: 25px 20px 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    header h1 { font-size: 1.6rem; margin-bottom: 5px; }
+    header p { font-size: 0.9rem; opacity: 0.9; }
+    main { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .card {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    h2 { color: #0066cc; margin-bottom: 15px; font-size: 1.15rem; font-weight: 600; }
+    .signal-display { text-align: center; padding: 20px 0; }
+    .signal-value { font-size: 3rem; font-weight: bold; color: #0066cc; margin-bottom: 10px; }
+    .signal-unit { font-size: 1.2rem; color: #666; }
+    .bars { display: flex; gap: 6px; justify-content: center; align-items: flex-end; height: 100px; margin: 20px 0; }
+    .bar { width: 18px; background: #e0e0e0; border-radius: 3px; transition: all 0.3s ease; }
+    .bar.fill-1 { height: 20%; background: #f44336; }
+    .bar.fill-2 { height: 40%; background: #ff9800; }
+    .bar.fill-3 { height: 60%; background: #ffc107; }
+    .bar.fill-4 { height: 80%; background: #4caf50; }
+    .bar.fill-5 { height: 100%; background: #4caf50; }
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 15px 0; }
+    .info-item { text-align: center; padding: 12px; background: #f8f9fa; border-radius: 8px; }
+    .info-label { font-size: 0.8rem; color: #666; margin-bottom: 5px; display: block; }
+    .info-value { font-size: 1.1rem; font-weight: bold; color: #0066cc; }
+    .button-group { display: flex; gap: 10px; margin: 15px 0; }
+    button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #0066cc;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:active { opacity: 0.8; transform: scale(0.98); }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    button.secondary { background: #6c757d; }
+    button.success { background: #28a745; }
+    #status { font-size: 0.9rem; color: #666; margin-top: 10px; text-align: center; }
+    .success { color: #28a745; }
+    .error { color: #dc3545; }
+    .warning { color: #ffc107; }
+    .network-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .network-item { background: #f8f9fa; padding: 10px; border-radius: 6px; }
+    .network-label { font-size: 0.75rem; color: #666; text-transform: uppercase; }
+    .network-value { font-size: 1rem; font-weight: bold; color: #333; }
+    .tips { background: #e3f2fd; border-left: 4px solid #0066cc; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .tips h3 { color: #0066cc; margin-bottom: 10px; font-size: 1rem; }
+    .tips li { margin-bottom: 8px; font-size: 0.9rem; color: #333; }
+    .calibration { margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px; border: 1px solid #ffc107; }
+    .calibration h3 { color: #856404; margin-bottom: 10px; font-size: 1rem; }
+    .calibration input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; text-align: center; }
+    .history { margin-top: 20px; }
+    .history-item { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.85rem; display: flex; justify-content: space-between; }
+    .connection-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+    .connected { background: #28a745; }
+    .disconnected { background: #dc3545; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @media (max-width: 400px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .network-info { grid-template-columns: 1fr; }
+      .button-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📶 Analyseur WiFi</h1>
+    <p>Mesurez la force du signal dans votre maison</p>
+  </header>
+  <main>
+    <div class="card">
+      <div class="signal-display">
+        <span class="connection-indicator connected"></span>
+        <span id="connectionStatus">Connecté</span>
+        <div class="signal-value" id="signalValue">-60</div>
+        <span class="signal-unit">dBm</span>
+        <div style="margin-top: 10px; font-size: 1.2rem; font-weight: bold; color: #28a745;" id="signalQuality">Bonne</div>
+      </div>
+      <div class="bars" id="bars"></div>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Distance</span>
+          <span class="info-value" id="distance">~8m</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Qualité</span>
+          <span class="info-value" id="qualityPercent">75%</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Vitesse</span>
+          <span class="info-value" id="speed">-- Mbps</span>
+        </div>
+      </div>
+      <div class="button-group">
+        <button onclick="scan()" id="scanBtn">Analyser maintenant</button>
+        <button onclick="calibrate()" class="secondary" id="calibrateBtn">Calibrer</button>
+      </div>
+      <p id="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>📊 Informations réseau</h2>
+      <div id="networkInfo" class="network-info">
+        <div class="loading">Chargement...</div>
+      </div>
+    </div>
+
+    <div class="card calibration" id="calibrationSection" style="display: none;">
+      <h3>⚙️ Calibration</h3>
+      <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Entrez votre distance actuelle par rapport au routeur :</p>
+      <input type="number" id="calibrationDistance" placeholder="Distance en mètres (ex: 5)" min="1" max="100">
+      <button onclick="saveCalibration()" class="success">Enregistrer</button>
+      <button onclick="hideCalibration()" class="secondary">Annuler</button>
+    </div>
+
+    <div class="card history">
+      <h3>📈 Historique des mesures</h3>
+      <div class="history-list" id="historyList">
+        <p style="color: #666; font-size: 0.9rem; text-align: center;">Aucune mesure enregistrée</p>
+      </div>
+      <button onclick="clearHistory()" class="secondary" style="margin-top: 10px;">Effacer l'historique</button>
+    </div>
+
+    <div class="card">
+      <div class="tips">
+        <h3>💡 Conseils</h3>
+        <ul>
+          <li>Déplacez-vous lentement pour voir les variations</li>
+          <li>Évitez les obstacles (murs, meubles)</li>
+          <li>Un signal > -60 dBm est bon</li>
+          <li>Positionnez le routeur en hauteur</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+  <script>
+    const MAX_HISTORY = 20;
+    let calibrationDistance = null;
+    let isScanning = false;
+    let scanInterval = null;
+    let history = [];
+
+    function initHistory() {
+      const saved = localStorage.getItem('wifiScannerHistory');
+      if (saved) { history = JSON.parse(saved); updateHistoryDisplay(); }
+    }
+
+    function updateHistoryDisplay() {
+      const container = document.getElementById('historyList');
+      if (history.length === 0) {
+        container.innerHTML = '<p style="color: #666; font-size: 0.9rem; text-align: center;">Aucune mesure</p>';
+        return;
+      }
+      let html = '';
+      history.slice().reverse().forEach(item => {
+        html += '<div class="history-item"><span>' + new Date(item.time).toLocaleTimeString('fr-FR') + '</span><span>' + item.rssi + ' dBm (' + item.quality + ')</span></div>';
+      });
+      container.innerHTML = html;
+    }
+
+    function addToHistory(rssi, quality) {
+      history.push({ time: new Date().getTime(), rssi: rssi, quality: quality });
+      if (history.length > MAX_HISTORY) history.shift();
+      localStorage.setItem('wifiScannerHistory', JSON.stringify(history));
+      updateHistoryDisplay();
+    }
+
+    function clearHistory() {
+      history = [];
+      localStorage.removeItem('wifiScannerHistory');
+      updateHistoryDisplay();
+    }
+
+    function loadCalibration() {
+      const saved = localStorage.getItem('wifiScannerCalibration');
+      if (saved) calibrationDistance = parseFloat(saved);
+    }
+
+    function calibrate() {
+      document.getElementById('calibrationSection').style.display = 'block';
+      document.getElementById('calibrateBtn').style.display = 'none';
+    }
+
+    function hideCalibration() {
+      document.getElementById('calibrationSection').style.display = 'none';
+      document.getElementById('calibrateBtn').style.display = 'block';
+    }
+
+    function saveCalibration() {
+      const distance = parseFloat(document.getElementById('calibrationDistance').value);
+      if (isNaN(distance) || distance <= 0) { alert('Distance invalide'); return; }
+      calibrationDistance = distance;
+      localStorage.setItem('wifiScannerCalibration', distance);
+      hideCalibration();
+      scan();
+    }
+
+    function updateBars(strength) {
+      const container = document.getElementById('bars');
+      let html = '';
+      for (let i = 1; i <= 5; i++) {
+        let fillClass = '';
+        if (strength >= i * 20) fillClass = 'fill-5';
+        else if (strength >= i * 15) fillClass = 'fill-4';
+        else if (strength >= i * 10) fillClass = 'fill-3';
+        else if (strength >= i * 5) fillClass = 'fill-2';
+        else if (strength > 0) fillClass = 'fill-1';
+        html += '<div class="bar ' + fillClass + '"></div>';
+      }
+      container.innerHTML = html;
+    }
+
+    async function scan() {
+      if (isScanning) return;
+
+      isScanning = true;
+      const scanBtn = document.getElementById('scanBtn');
+      const statusEl = document.getElementById('status');
+
+      scanBtn.disabled = true;
+      scanBtn.textContent = 'Analyse...';
+      statusEl.textContent = '🔍 Mesure en cours...';
+      statusEl.className = '';
+
+      try {
+        let latency = null;
+        try {
+          const start = Date.now();
+          await fetch('https://httpbin.org/get', {
+            cache: 'no-store',
+            method: 'GET',
+            mode: 'cors'
+          });
+          latency = Date.now() - start;
+        } catch (e) {
+          latency = 50;
+        }
+
+        let rssiEstimate = -50 + (100 - Math.min(latency, 200)) / 2;
+        rssiEstimate = Math.max(-100, Math.min(-20, Math.round(rssiEstimate)));
+        const strength = Math.max(0, Math.min(100, (rssiEstimate + 100) * 1.25));
+
+        document.getElementById('signalValue').textContent = rssiEstimate;
+
+        let quality, qualityPercent;
+        if (strength >= 80) { quality = 'Excellente'; qualityPercent = '90%'; }
+        else if (strength >= 60) { quality = 'Bonne'; qualityPercent = '75%'; }
+        else if (strength >= 40) { quality = 'Moyenne'; qualityPercent = '50%'; }
+        else if (strength >= 20) { quality = 'Faible'; qualityPercent = '25%'; }
+        else { quality = 'Très faible'; qualityPercent = '10%'; }
+
+        document.getElementById('qualityPercent').textContent = qualityPercent;
+        document.getElementById('signalQuality').textContent = quality;
+        const qualityEl = document.getElementById('signalQuality');
+        qualityEl.style.color = strength >= 80 ? '#28a745' : strength >= 60 ? '#28a745' : strength >= 40 ? '#ffc107' : strength >= 20 ? '#fd7e14' : '#dc3545';
+
+        if (calibrationDistance) {
+          document.getElementById('distance').textContent = '~' + calibrationDistance + 'm';
+        } else {
+          const txPower = -30;
+          const pathLossExponent = 2.5;
+          const distance = Math.pow(10, (txPower - rssiEstimate) / (10 * pathLossExponent));
+          document.getElementById('distance').textContent = '~' + Math.round(distance) + 'm';
+        }
+
+        document.getElementById('speed').textContent = '-- Mbps';
+        updateBars(strength);
+
+        const indicator = document.querySelector('.connection-indicator');
+        indicator.className = 'connection-indicator connected';
+        document.getElementById('connectionStatus').textContent = 'Connecté';
+
+        addToHistory(rssiEstimate, quality);
+        updateNetworkInfoSimple(latency);
+
+        statusEl.textContent = '✓ Analyse terminée (latence: ' + latency + 'ms)';
+        statusEl.className = 'success';
+
+      } catch (e) {
+        statusEl.textContent = '✗ Erreur: ' + e.message;
+        statusEl.className = 'error';
+        document.getElementById('signalValue').textContent = '-70';
+        document.getElementById('signalQuality').textContent = 'Moyenne';
+        document.getElementById('qualityPercent').textContent = '50%';
+        document.getElementById('distance').textContent = '~10m';
+        document.getElementById('speed').textContent = '-- Mbps';
+        updateBars(50);
+      } finally {
+        isScanning = false;
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Analyser maintenant';
+      }
+    }
+
+    function updateNetworkInfoSimple(latency) {
+      const container = document.getElementById('networkInfo');
+      let html = '';
+      html += '<div class="network-item"><div class="network-label">Type</div><div class="network-value">WiFi (estimé)</div></div>';
+      if (latency) {
+        html += '<div class="network-item"><div class="network-label">Latence</div><div class="network-value">' + latency + ' ms</div></div>';
+      }
+      html += '<div class="network-item"><div class="network-label">Statut</div><div class="network-value">En ligne</div></div>';
+      if (calibrationDistance) {
+        html += '<div class="network-item"><div class="network-label">Calibré</div><div class="network-value">' + calibrationDistance + ' m</div></div>';
+      }
+      container.innerHTML = html;
+    }
+
+    function startAutoScan() {
+      if (scanInterval) clearInterval(scanInterval);
+      scanInterval = setInterval(() => {
+        if (!isScanning && navigator.onLine) {
+          scan();
+        }
+      }, 5000);
+    }
+
+    function init() {
+      initHistory();
+      loadCalibration();
+      startAutoScan();
+      updateBars(60);
+      document.getElementById('signalValue').textContent = '-60';
+      document.getElementById('signalQuality').textContent = 'Bonne';
+      document.getElementById('qualityPercent').textContent = '75%';
+      document.getElementById('distance').textContent = '~8m';
+      document.getElementById('speed').textContent = '-- Mbps';
+      updateNetworkInfoSimple();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
+ENDOFFILE

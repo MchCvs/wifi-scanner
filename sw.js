@@ -1,6 +1,12 @@
-cat > sw.js << 'EOF'
-const CACHE_NAME = 'wifi-scanner-v4';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-512.png', '/icon.svg'];
+cat > ~/Documents/Wifi-scanner/sw.js << 'ENDOFFILE'
+const CACHE_NAME = 'wifi-scanner-v6';
+const ASSETS = [
+  '/wifi-scanner/',
+  '/wifi-scanner/index.html',
+  '/wifi-scanner/manifest.json',
+  '/wifi-scanner/icon-512.png',
+  '/wifi-scanner/icon.svg'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -28,4 +34,4 @@ self.addEventListener('fetch', e => {
       .then(response => response || fetch(e.request))
   );
 });
-EOF
+ENDOFFILE
