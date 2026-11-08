@@ -1,0 +1,20 @@
+# Gradle
+.gradle/
+**/build/
+
+# Configuration locale
+local.properties
+
+# Fichiers générés
+*.apk
+*.aab
+
+# Clés privées
+*.jks
+*.keystore
+
+# Documents internes et sauvegardes
+CONTINUITE.md*
+**/*sauvegarde*
+*.bundle
+/Icône/
