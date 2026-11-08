@@ -1,6 +1,6 @@
 # Scanner WiFi
 
-Application Android native créée par Thierry CVS — La Réunion.
+Application Android native créée par Thierry CHEVASSUS — Piton Sainte Rose, La Réunion, France.
 
 ## Fonctionnalités
 - Scan manuel des réseaux Wi-Fi.
@@ -73,7 +73,11 @@ Les fonctionnalités principales ont été testées sur un Samsung Galaxy A04s s
 Le traitement des scans refusés et des résultats non actualisés est implémenté. Certains cas limites restent dépendants des événements transmis par Android.
 
 ## Auteur
-Thierry CVS — La Réunion
+Thierry CHEVASSUS — Piton Sainte Rose, La Réunion, France
 
 ## Licence
-Les conditions de réutilisation et de redistribution restent à préciser.
+GPL-3.0-or-later — GNU General Public License v3.0 or later.
+
+Copyright © 2026 Thierry CHEVASSUS.
+
+Les redistributions doivent conserver les mentions de copyright, la licence et les attributions d’auteur. Voir ADDITIONAL-TERMS.md pour la condition d’attribution visible.

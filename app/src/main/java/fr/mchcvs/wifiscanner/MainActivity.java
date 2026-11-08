@@ -1,3 +1,16 @@
+/*
+ * Scanner WiFi
+ * Copyright (C) 2026 Thierry CHEVASSUS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * See LICENSE for the full license text.
+ * See ADDITIONAL-TERMS.md for the additional author attribution condition.
+ */
+
 package fr.mchcvs.wifiscanner;
 
 import android.Manifest;
@@ -202,7 +215,7 @@ public class MainActivity extends Activity {
         );
 
         TextView signature = new TextView(this);
-        signature.setText("Créé par Thierry CVS  🇷🇪  La Réunion");
+        signature.setText("Créé par Thierry CHEVASSUS — Piton Sainte Rose, La Réunion, France.");
         signature.setTextSize(12);
         signature.setTextColor(Color.GRAY);
         signature.setGravity(Gravity.CENTER);
