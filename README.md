@@ -2,6 +2,22 @@
 
 Application Android native créée par Thierry CHEVASSUS — Piton Sainte Rose, La Réunion, France.
 
+## Installation
+
+### Méthode A : installation directe sur Android (recommandée)
+
+Téléchargez **Scanner WiFi** [ICI](https://github.com/MchCvs/wifi-scanner/releases/download/v1.0.1/Scanner-WiFi-1.0.1.apk).
+
+1. Ouvrez le fichier téléchargé sur votre téléphone Android.
+2. Si Android le demande, autorisez l'installation depuis cette source.
+3. Appuyez sur **Installer**.
+
+L'application est ensuite disponible dans le menu de votre téléphone.
+
+### Méthode B : compilation depuis les sources (développeurs)
+
+La procédure de compilation sous Debian / Linux est détaillée plus bas.
+
 ## Fonctionnalités
 - Scan manuel des réseaux Wi-Fi.
 - Affichage des SSID et des informations disponibles.
